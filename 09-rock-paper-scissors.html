@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors</title>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #e94560;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .move-button {
+            background-color: #16213e;
+            border: 3px solid #e94560;
+            width: 130px;
+            height: 130px;
+            border-radius: 65px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .move-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #e94560;
+        }
+        .move-icon {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+        }
+        .move-name {
+            margin-top: 8px;
+            font-size: 16px;
+            color: #e94560;
+        }
+        .result {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .moves {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .score {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .reset-score-button {
+            background-color: #e94560;
+            border: none;
+            color: #1a1a2e;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .reset-score-button:hover {
+            background-color: #ff6b6b;
+            transform: scale(1.05);
+        }
+        .streak {
+            font-size: 22px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .high-streak {
+            animation: pulse 1s infinite;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">Rock Paper Scissors</h1>
+    <div class="game-area">
+        <div class="buttons-container">
+            <button onclick="playGame('rock')" class="move-button">
+                <img src="images/rock.png" alt="Rock" class="move-icon">
+                <span class="move-name">Rock</span>
+            </button>
+            <button onclick="playGame('paper')" class="move-button">
+                <img src="images/paper.png" alt="Paper" class="move-icon">
+                <span class="move-name">Paper</span>
+            </button>
+            <button onclick="playGame('scissors')" class="move-button">
+                <img src="images/scissors.png" alt="Scissors" class="move-icon">
+                <span class="move-name">Scissors</span>
+            </button>
+        </div>
+        <p class="result" id="result">Choose your move!</p>
+        <div class="moves" id="moves"></div>
+        <p class="score" id="score"></p>
+        <p class="streak" id="streak"></p>
+        <button onclick="resetScore()" class="reset-score-button">Reset Score</button>
+    </div>
+
+    <script>
+        let score = JSON.parse(localStorage.getItem('score')) || {
+            wins: 0,
+            losses: 0,
+            ties: 0
+        };
+        let currentStreak = 0;
+        let bestStreak = parseInt(localStorage.getItem('bestStreak')) || 0;
+
+        updateScoreElement();
+
+        function playGame(playerMove) {
+            const computerMove = pickComputerMove();
+            let result = '';
+
+            if (playerMove === computerMove) {
+                result = 'Tie.';
+            } else if (
+                (playerMove === 'rock' && computerMove === 'scissors') ||
+                (playerMove === 'paper' && computerMove === 'rock') ||
+                (playerMove === 'scissors' && computerMove === 'paper')
+            ) {
+                result = 'You win!';
+                score.wins += 1;
+                currentStreak++;
+                if (currentStreak > bestStreak) {
+                    bestStreak = currentStreak;
+                    localStorage.setItem('bestStreak', bestStreak);
+                }
+            } else {
+                result = 'You lose.';
+                score.losses += 1;
+                currentStreak = 0;
+            }
+
+            if (result === 'Tie.') {
+                score.ties += 1;
+            }
+
+            localStorage.setItem('score', JSON.stringify(score));
+            updateScoreElement();
+            displayResult(result, playerMove, computerMove);
+        }
+
+        function updateScoreElement() {
+            document.getElementById('score').innerHTML = `Wins: ${score.wins}, Losses: ${score.losses}, Ties: ${score.ties}`;
+            const streakElement = document.getElementById('streak');
+            streakElement.innerHTML = `Current Streak: ${currentStreak} | Best Streak: ${bestStreak}`;
+            if (currentStreak >= 3) {
+                streakElement.classList.add('high-streak');
+            } else {
+                streakElement.classList.remove('high-streak');
+            }
+        }
+
+        function displayResult(result, playerMove, computerMove) {
+            document.getElementById('result').innerHTML = result;
+            document.getElementById('moves').innerHTML = `
+                You <img src="images/${playerMove}.png" alt="${playerMove}" class="move-icon">
+                <img src="images/${computerMove}.png" alt="${computerMove}" class="move-icon"> Computer
+            `;
+        }
+
+        function pickComputerMove() {
+            const moves = ['rock', 'paper', 'scissors'];
+            return moves[Math.floor(Math.random() * moves.length)];
+        }
+
+        function resetScore() {
+            score = { wins: 0, losses: 0, ties: 0 };
+            currentStreak = 0;
+            bestStreak = 0;
+            localStorage.removeItem('score');
+            localStorage.removeItem('bestStreak');
+            updateScoreElement();
+            document.getElementById('result').innerHTML = 'Score reset. Choose your move!';
+            document.getElementById('moves').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
